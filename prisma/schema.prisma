@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  password       String
+  name           String?
+  points         Int           @default(0)
+  lifetimePoints Int           @default(0)
+  lastLoginDate  DateTime?
+  role           String        @default("USER") // ADMIN or USER
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tasksCompleted UserTask[]
+  payouts        PayoutRequest[]
+}
+
+model Task {
+  id           String     @id @default(uuid())
+  title        String
+  description  String
+  rewardPoints Int
+  type         String     @default("SURVEY") // SURVEY, VIDEO, APP_TEST
+  url          String?
+  isVipOnly    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  
+  completedBy  UserTask[]
+}
+
+model UserTask {
+  id        String   @id @default(uuid())
+  userId    String
+  taskId    String
+  status    String   @default("COMPLETED")
+  earned    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id])
+}
+
+model PayoutRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Float
+  points    Int
+  method    String   // PAYPAL, GIFTCARD
+  status    String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
